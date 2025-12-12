@@ -1,0 +1,41 @@
+{
+  "name": "OptiCorte PRO",
+  "short_name": "OptiCorte",
+  "description": "Optimizador profesional de cortes para construcción",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1565c0",
+  "theme_color": "#2196f3",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "business", "tools"],
+  "shortcuts": [
+    {
+      "name": "Nuevo Proyecto",
+      "short_name": "Proyecto",
+      "description": "Crear nuevo proyecto de construcción",
+      "url": "/?new=true",
+      "icons": [{ "src": "icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Lista Compras",
+      "short_name": "Compras",
+      "description": "Ver lista de compras",
+      "url": "/?shopping=true",
+      "icons": [{ "src": "cart-96.png", "sizes": "96x96" }]
+    }
+  ]
+}

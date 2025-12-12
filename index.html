@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiCorte PRO - Optimizador de Cortes para Fierros</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <!-- Meta tags para PWA -->
+<meta name="application-name" content="OptiCorte PRO">
+<meta name="apple-mobile-web-app-title" content="OptiCorte">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2196f3">
+<meta name="msapplication-TileColor" content="#2196f3">
+
+<!-- Iconos para PWA -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<!-- Service Worker -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(registration => {
+          console.log('ServiceWorker registrado:', registration.scope);
+        })
+        .catch(error => {
+          console.log('Error registrando ServiceWorker:', error);
+        });
+    });
+  }
+</script>
+</head>
+<body>
+    <div class="container">
+        <!-- Encabezado -->
+        <header>
+            <h1><i class="fas fa-hard-hat"></i> OptiCorte <span class="version">PRO</span></h1>
+            <p class="subtitle">Optimizador profesional de cortes para construcción (Barras de 6 metros)</p>
+            <div class="instructions">
+                <p><i class="fas fa-info-circle"></i> <strong>Instrucciones rápidas:</strong> Usa CENTÍMETROS (ej: 150 = 1.5m). Crea grupos, añade cortes y materiales, luego genera tu lista de compras.</p>
+            </div>
+        </header>
+
+        <!-- Sección principal -->
+        <main>
+            <!-- Panel izquierdo -->
+            <div class="input-panel">
+                <!-- Crear grupo -->
+                <section class="group-creator card">
+                    <h2><i class="fas fa-folder-plus"></i> Crear Nuevo Proyecto/Grupo</h2>
+                    <div class="form-group">
+                        <label for="groupName"><i class="fas fa-tag"></i> Nombre del Grupo</label>
+                        <input type="text" id="groupName" placeholder="Ej: Ventana Principal, Puerta Cocina, Estructura Techo...">
+                    </div>
+                    <div class="form-group">
+                        <label for="groupNotes"><i class="fas fa-sticky-note"></i> Notas del Grupo (opcional)</label>
+                        <textarea id="groupNotes" rows="2" placeholder="Ej: Necesita 5 bisagras, 3 chapas, tornillos..."></textarea>
+                    </div>
+                    <button id="createGroupBtn" class="btn btn-primary">
+                        <i class="fas fa-plus-circle"></i> Crear Grupo
+                    </button>
+                </section>
+
+                <!-- Añadir cortes -->
+                <section class="cut-creator card">
+                    <h2><i class="fas fa-ruler-combined"></i> Añadir Cortes y Materiales</h2>
+                    
+                    <!-- Pestañas para tipo de material -->
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="cortes">Cortes de Barras</button>
+                        <button class="tab-btn" data-tab="materiales">Materiales Adicionales</button>
+                    </div>
+                    
+                    <!-- Formulario para cortes -->
+                    <div id="cortes-form" class="tab-content active">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="cutLength"><i class="fas fa-ruler"></i> Longitud (cm)</label>
+                                <input type="number" id="cutLength" min="1" max="600" step="1" placeholder="Ej: 150 (para 1.5m)">
+                                <small class="hint">En centímetros. Máx: 600cm (6m)</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="cutType"><i class="fas fa-cog"></i> Tipo de Fierro</label>
+                                <select id="cutType">
+                                    <optgroup label="Fierro Angular">
+                                        <option value="angular-1/2">Angular 1/2"</option>
+                                        <option value="angular-3/4">Angular 3/4"</option>
+                                        <option value="angular-1">Angular 1"</option>
+                                        <option value="angular-1-1/2">Angular 1 1/2"</option>
+                                        <option value="angular-2">Angular 2"</option>
+                                    </optgroup>
+                                    <optgroup label="Tubo">
+                                        <option value="tubo-20mm">Tubo 20mm</option>
+                                        <option value="tubo-25mm">Tubo 25mm</option>
+                                        <option value="tubo-30mm">Tubo 30mm</option>
+                                        <option value="tubo-40mm">Tubo 40mm</option>
+                                        <option value="tubo-50mm">Tubo 50mm</option>
+                                        <option value="tubo-60mm">Tubo 60mm</option>
+                                    </optgroup>
+                                    <optgroup label="Fierro en T">
+                                        <option value="t-1/2">T 1/2"</option>
+                                        <option value="t-3/4">T 3/4"</option>
+                                        <option value="t-1">T 1"</option>
+                                        <option value="t-1-1/2">T 1 1/2"</option>
+                                    </optgroup>
+                                    <optgroup label="Fierro Redondo">
+                                        <option value="redondo-1/4">Redondo 1/4"</option>
+                                        <option value="redondo-3/8">Redondo 3/8"</option>
+                                        <option value="redondo-1/2">Redondo 1/2"</option>
+                                        <option value="redondo-5/8">Redondo 5/8"</option>
+                                        <option value="redondo-3/4">Redondo 3/4"</option>
+                                    </optgroup>
+                                    <optgroup label="Fierro Cuadrado">
+                                        <option value="cuadrado-1/2">Cuadrado 1/2"</option>
+                                        <option value="cuadrado-3/4">Cuadrado 3/4"</option>
+                                        <option value="cuadrado-1">Cuadrado 1"</option>
+                                        <option value="cuadrado-1-1/2">Cuadrado 1 1/2"</option>
+                                    </optgroup>
+                                    <optgroup label="Plancha">
+                                        <option value="plancha-2x1">Plancha 2x1 metros</option>
+                                        <option value="plancha-2.5x1.25">Plancha 2.5x1.25m</option>
+                                        <option value="plancha-3x1.5">Plancha 3x1.5m</option>
+                                        <option value="plancha-1/8">Plancha 1/8" grosor</option>
+                                        <option value="plancha-1/4">Plancha 1/4" grosor</option>
+                                        <option value="plancha-3/8">Plancha 3/8" grosor</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="groupSelect"><i class="fas fa-folder"></i> Grupo Destino</label>
+                            <select id="groupSelect">
+                                <option value="">-- Selecciona un grupo --</option>
+                            </select>
+                        </div>
+                        <button id="addCutBtn" class="btn btn-secondary">
+                            <i class="fas fa-plus"></i> Añadir Corte
+                        </button>
+                    </div>
+                    
+                    <!-- Formulario para materiales adicionales -->
+                    <div id="materiales-form" class="tab-content">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="materialName"><i class="fas fa-box"></i> Material</label>
+                                <select id="materialName">
+                                    <option value="bisagra-3">Bisagra 3"</option>
+                                    <option value="bisagra-4">Bisagra 4"</option>
+                                    <option value="bisagra-5">Bisagra 5"</option>
+                                    <option value="bisagra-6">Bisagra 6"</option>
+                                    <option value="chapa-simple">Chapa Simple</option>
+                                    <option value="chapa-doble">Chapa Doble</option>
+                                    <option value="chapa-cerradura">Chapa con Cerradura</option>
+                                    <option value="tornillo-1/2">Tornillo 1/2"</option>
+                                    <option value="tornillo-3/4">Tornillo 3/4"</option>
+                                    <option value="tornillo-1">Tornillo 1"</option>
+                                    <option value="tornillo-1-1/4">Tornillo 1 1/4"</option>
+                                    <option value="tuerca-1/2">Tuerca 1/2"</option>
+                                    <option value="tuerca-3/4">Tuerca 3/4"</option>
+                                    <option value="arandela">Arandela</option>
+                                    <option value="perno">Perno</option>
+                                    <option value="clavo">Clavo para madera</option>
+                                    <option value="pintura">Pintura (litro)</option>
+                                    <option value="sellador">Sellador (tubo)</option>
+                                    <option value="otro">Otro material...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="materialQuantity"><i class="fas fa-hashtag"></i> Cantidad</label>
+                                <input type="number" id="materialQuantity" min="1" max="1000" placeholder="Ej: 5" value="1">
+                            </div>
+                        </div>
+                        <div class="form-group" id="customMaterialGroup" style="display: none;">
+                            <label for="customMaterialName"><i class="fas fa-edit"></i> Nombre del Material</label>
+                            <input type="text" id="customMaterialName" placeholder="Ej: Cable eléctrico, Cemento, etc.">
+                        </div>
+                        <div class="form-group">
+                            <label for="materialNotes"><i class="fas fa-comment"></i> Notas (opcional)</label>
+                            <input type="text" id="materialNotes" placeholder="Ej: Color blanco, acero inoxidable...">
+                        </div>
+                        <div class="form-group">
+                            <label for="materialGroupSelect"><i class="fas fa-folder"></i> Grupo Destino</label>
+                            <select id="materialGroupSelect">
+                                <option value="">-- Selecciona un grupo --</option>
+                            </select>
+                        </div>
+                        <button id="addMaterialBtn" class="btn btn-secondary">
+                            <i class="fas fa-cart-plus"></i> Añadir Material
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Grupos activos -->
+                <section class="active-groups card">
+                    <h2><i class="fas fa-list"></i> Proyectos y Materiales Registrados</h2>
+                    <div id="groupsContainer">
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <p>No hay proyectos creados todavía. Crea tu primer proyecto para comenzar.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Panel derecho -->
+            <div class="output-panel">
+                <!-- Optimización -->
+                <section class="optimization-control card">
+                    <h2><i class="fas fa-calculator"></i> Cálculo y Lista de Compras</h2>
+                    <div class="optimization-options">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="separateByType" checked>
+                            <label for="separateByType">Optimizar por separado cada tipo de material</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="allowRotation" checked>
+                            <label for="allowRotation">Permitir rotación de cortes (menor desperdicio)</label>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button id="optimizeBtn" class="btn btn-optimize">
+                            <i class="fas fa-magic"></i> Calcular Optimización
+                        </button>
+                        <button id="generateReportBtn" class="btn btn-report" disabled>
+                            <i class="fas fa-file-pdf"></i> Generar Lista de Compras
+                        </button>
+                        <button id="clearAllBtn" class="btn btn-clear">
+                            <i class="fas fa-trash-alt"></i> Limpiar Todo
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Resultados -->
+                <section class="results card">
+                    <h2><i class="fas fa-chart-bar"></i> Resultados de Optimización</h2>
+                    <div id="resultsContainer">
+                        <div class="empty-state">
+                            <i class="fas fa-chart-line"></i>
+                            <p>Los resultados aparecerán aquí después de calcular la optimización.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Lista de compras simplificada -->
+                <section class="shopping-list card">
+                    <h2><i class="fas fa-shopping-cart"></i> Lista de Compras Simplificada</h2>
+                    <div id="shoppingListContainer">
+                        <div class="empty-state">
+                            <i class="fas fa-cart-shopping"></i>
+                            <p>Aquí aparecerá la lista simplificada para enviar al dueño o comprador.</p>
+                        </div>
+                    </div>
+                    <div class="shopping-actions" style="display: none;">
+                        <button id="copyListBtn" class="btn btn-small">
+                            <i class="fas fa-copy"></i> Copiar Lista
+                        </button>
+                        <button id="printListBtn" class="btn btn-small">
+                            <i class="fas fa-print"></i> Imprimir
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Pie de página -->
+        <footer>
+            <p><i class="fas fa-lightbulb"></i> <strong>OptiCorte PRO</strong> - Sistema profesional para cálculo de materiales de construcción. Barras estándar: 6 metros (600cm).</p>
+            <p class="footer-note">Todos los cálculos en centímetros. Las medidas en pulgadas son referenciales.</p>
+        </footer>
+    </div>
+
+    <!-- Modal para editar corte -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Editar Corte</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="editCutLength">Longitud (cm)</label>
+                    <input type="number" id="editCutLength" min="1" max="600" step="1">
+                </div>
+                <div class="form-group">
+                    <label for="editCutType">Tipo de Fierro</label>
+                    <select id="editCutType">
+                        <optgroup label="Fierro Angular">
+                            <option value="angular-1/2">Angular 1/2"</option>
+                            <option value="angular-3/4">Angular 3/4"</option>
+                            <option value="angular-1">Angular 1"</option>
+                            <option value="angular-1-1/2">Angular 1 1/2"</option>
+                            <option value="angular-2">Angular 2"</option>
+                        </optgroup>
+                        <optgroup label="Tubo">
+                            <option value="tubo-20mm">Tubo 20mm</option>
+                            <option value="tubo-25mm">Tubo 25mm</option>
+                            <option value="tubo-30mm">Tubo 30mm</option>
+                            <option value="tubo-40mm">Tubo 40mm</option>
+                            <option value="tubo-50mm">Tubo 50mm</option>
+                        </optgroup>
+                        <optgroup label="Fierro en T">
+                            <option value="t-1/2">T 1/2"</option>
+                            <option value="t-3/4">T 3/4"</option>
+                            <option value="t-1">T 1"</option>
+                            <option value="t-1-1/2">T 1 1/2"</option>
+                        </optgroup>
+                        <optgroup label="Fierro Redondo">
+                            <option value="redondo-1/4">Redondo 1/4"</option>
+                            <option value="redondo-3/8">Redondo 3/8"</option>
+                            <option value="redondo-1/2">Redondo 1/2"</option>
+                            <option value="redondo-5/8">Redondo 5/8"</option>
+                        </optgroup>
+                        <optgroup label="Fierro Cuadrado">
+                            <option value="cuadrado-1/2">Cuadrado 1/2"</option>
+                            <option value="cuadrado-3/4">Cuadrado 3/4"</option>
+                            <option value="cuadrado-1">Cuadrado 1"</option>
+                            <option value="cuadrado-1-1/2">Cuadrado 1 1/2"</option>
+                        </optgroup>
+                        <optgroup label="Plancha">
+                            <option value="plancha-2x1">Plancha 2x1 metros</option>
+                            <option value="plancha-2.5x1.25">Plancha 2.5x1.25m</option>
+                            <option value="plancha-3x1.5">Plancha 3x1.5m</option>
+                            <option value="plancha-1/8">Plancha 1/8" grosor</option>
+                            <option value="plancha-1/4">Plancha 1/4" grosor</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <input type="hidden" id="editCutId">
+            </div>
+            <div class="modal-footer">
+                <button id="saveEditBtn" class="btn btn-primary">Guardar Cambios</button>
+                <button class="btn btn-secondary close-modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar grupo -->
+    <div id="editGroupModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Editar Proyecto</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="editGroupName">Nombre del proyecto</label>
+                    <input type="text" id="editGroupName">
+                </div>
+                <div class="form-group">
+                    <label for="editGroupNotes">Notas del proyecto</label>
+                    <textarea id="editGroupNotes" rows="3"></textarea>
+                </div>
+                <input type="hidden" id="editGroupId">
+            </div>
+            <div class="modal-footer">
+                <button id="saveGroupEditBtn" class="btn btn-primary">Guardar Cambios</button>
+                <button class="btn btn-secondary close-modal">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para lista de compras (PDF/Imagen) -->
+    <div id="reportModal" class="modal">
+        <div class="modal-content wide-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-invoice-dollar"></i> Lista de Compras - Para el Dueño/Comprador</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="reportContent">
+                    <!-- Contenido generado dinámicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="printReportBtn" class="btn btn-primary">
+                    <i class="fas fa-print"></i> Imprimir Lista
+                </button>
+                <button id="downloadReportBtn" class="btn btn-optimize">
+                    <i class="fas fa-download"></i> Descargar como Imagen
+                </button>
+                <button class="btn btn-secondary close-modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
